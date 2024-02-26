@@ -15,77 +15,93 @@
 package provider
 
 import (
-	"math/rand"
-	"time"
+	"errors"
+	"fmt"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
+	"google.golang.org/api/youtube/v3"
 )
 
 // Version is initialized by the Go linker to contain the semver of this build.
 var Version string
 
-const Name string = "xyz"
+const Name string = "youtubeplaylist-native"
 
 func Provider() p.Provider {
 	// We tell the provider what resources it needs to support.
 	// In this case, a single custom resource.
 	return infer.Provider(infer.Options{
 		Resources: []infer.InferredResource{
-			infer.Resource[Random, RandomArgs, RandomState](),
-		},
-		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{
-			"provider": "index",
+			infer.Resource[Playlist, PlaylistArgs, PlaylistState](),
 		},
 	})
 }
 
-// Each resource has a controlling struct.
-// Resource behavior is determined by implementing methods on the controlling struct.
-// The `Create` method is mandatory, but other methods are optional.
-// - Check: Remap inputs before they are typed.
-// - Diff: Change how instances of a resource are compared.
-// - Update: Mutate a resource in place.
-// - Read: Get the state of a resource from the backing provider.
-// - Delete: Custom logic when the resource is deleted.
-// - Annotate: Describe fields and set defaults for a resource.
-// - WireDependencies: Control how outputs and secrets flows through values.
-type Random struct{}
+type Playlist struct{}
 
-// Each resource has an input struct, defining what arguments it accepts.
-type RandomArgs struct {
-	// Fields projected into Pulumi must be public and hava a `pulumi:"..."` tag.
-	// The pulumi tag doesn't need to match the field name, but it's generally a
-	// good idea.
-	Length int `pulumi:"length"`
+type PlaylistArgs struct {
+	// todo: if Id is left empty, Title must be provided in order to create the playlist
+	Title       string `pulumi:"title,optional"`
+	Description string `pulumi:"description,optional"`
+	Id          string `pulumi:"id,optional"`
 }
 
-// Each resource has a state, describing the fields that exist on the created resource.
-type RandomState struct {
-	// It is generally a good idea to embed args in outputs, but it isn't strictly necessary.
-	RandomArgs
-	// Here we define a required output called result.
-	Result string `pulumi:"result"`
+type PlaylistState struct {
+	PlaylistArgs
 }
 
-// All resources must implement Create at a minimum.
-func (Random) Create(ctx p.Context, name string, input RandomArgs, preview bool) (string, RandomState, error) {
-	state := RandomState{RandomArgs: input}
+func (Playlist) Create(ctx p.Context, name string, input PlaylistArgs, preview bool) (string, PlaylistState, error) {
+	youtubeService, err := youtube.NewService(ctx)
+	if err != nil {
+		return "", PlaylistState{}, errors.New(fmt.Sprintf("failed to create youtube service: %v", err))
+	}
+	state := PlaylistState{PlaylistArgs: input}
 	if preview {
 		return name, state, nil
 	}
-	state.Result = makeRandom(input.Length)
+
+	// If the user didn't provide an ID, we'll create a new playlist.
+	if input.Id == "" {
+		id, err := createPlaylist(youtubeService, input)
+		if err != nil {
+			return "", PlaylistState{}, errors.New(fmt.Sprintf("failed to create playlist: %v", err))
+		}
+		state.Id = id
+	} else {
+		playlist, err := getPlaylist(youtubeService, input.Id)
+		if err != nil {
+			return "", PlaylistState{}, errors.New(fmt.Sprintf("failed to get playlist: %v", err))
+		}
+		state.Title = playlist.Snippet.Title
+		state.Description = playlist.Snippet.Description
+	}
 	return name, state, nil
 }
 
-func makeRandom(length int) string {
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-	charset := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-	result := make([]rune, length)
-	for i := range result {
-		result[i] = charset[seededRand.Intn(len(charset))]
+func getPlaylist(youtubeService *youtube.Service, id string) (*youtube.Playlist, error) {
+	call := youtubeService.Playlists.List([]string{"snippet"}).Id(id)
+	response, err := call.Do()
+	if err != nil {
+		return nil, err
 	}
-	return string(result)
+	if len(response.Items) == 0 {
+		return nil, errors.New(fmt.Sprintf("playlist with id %s not found", id))
+	}
+	return response.Items[0], nil
+}
+
+func createPlaylist(youtubeService *youtube.Service, input PlaylistArgs) (string, error) {
+	playlist := &youtube.Playlist{
+		Snippet: &youtube.PlaylistSnippet{
+			Title:       input.Title,
+			Description: input.Description,
+		},
+	}
+	call := youtubeService.Playlists.Insert([]string{"snippet"}, playlist)
+	response, err := call.Do()
+	if err != nil {
+		return "", err
+	}
+	return response.Id, nil
 }
