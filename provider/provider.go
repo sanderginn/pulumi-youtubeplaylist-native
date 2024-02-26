@@ -17,6 +17,7 @@ package provider
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -42,9 +43,10 @@ type Playlist struct{}
 
 type PlaylistArgs struct {
 	// todo: if Id is left empty, Title must be provided in order to create the playlist
-	Title       string `pulumi:"title,optional"`
-	Description string `pulumi:"description,optional"`
-	Id          string `pulumi:"id,optional"`
+	Title       string   `pulumi:"title,optional"`
+	Description string   `pulumi:"description,optional"`
+	Id          string   `pulumi:"id,optional"`
+	ItemIds     []string `pulumi:"items,optional"`
 }
 
 type PlaylistState struct {
@@ -69,24 +71,30 @@ func (Playlist) Create(ctx p.Context, name string, input PlaylistArgs, preview b
 		}
 		state.Id = id
 	} else {
-		playlist, err := getPlaylist(youtubeService, input.Id)
+		playlist, err := getPlaylist(youtubeService, input)
 		if err != nil {
 			return "", PlaylistState{}, errors.New(fmt.Sprintf("failed to get playlist: %v", err))
 		}
 		state.Title = playlist.Snippet.Title
 		state.Description = playlist.Snippet.Description
 	}
+
+	err = populatePlaylist(youtubeService, input)
+	if err != nil {
+		return "", PlaylistState{}, errors.New(fmt.Sprintf("failed to populate playlist: %v", err))
+	}
+
 	return name, state, nil
 }
 
-func getPlaylist(youtubeService *youtube.Service, id string) (*youtube.Playlist, error) {
-	call := youtubeService.Playlists.List([]string{"snippet"}).Id(id)
+func getPlaylist(youtubeService *youtube.Service, input PlaylistArgs) (*youtube.Playlist, error) {
+	call := youtubeService.Playlists.List([]string{"snippet"}).Id(input.Id)
 	response, err := call.Do()
 	if err != nil {
 		return nil, err
 	}
 	if len(response.Items) == 0 {
-		return nil, errors.New(fmt.Sprintf("playlist with id %s not found", id))
+		return nil, errors.New(fmt.Sprintf("playlist with id %s not found", input.Id))
 	}
 	return response.Items[0], nil
 }
@@ -104,4 +112,43 @@ func createPlaylist(youtubeService *youtube.Service, input PlaylistArgs) (string
 		return "", err
 	}
 	return response.Id, nil
+}
+
+func populatePlaylist(youtubeService *youtube.Service, input PlaylistArgs) error {
+	resp, err := youtubeService.PlaylistItems.List([]string{"snippet"}).PlaylistId(input.Id).Do()
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to list playlist items: %v", err))
+	}
+	// first fetch the current items in the playlist and remove any that are not supposed to be a member
+	var currentIds []string
+	for _, item := range resp.Items {
+		itemId := item.Snippet.ResourceId.VideoId
+		if !slices.Contains(input.ItemIds, itemId) {
+			if err = youtubeService.PlaylistItems.Delete(item.Id).Do(); err != nil {
+				return errors.New(fmt.Sprintf("failed to delete item %s from playlist: %v", itemId, err))
+			}
+		} else {
+			currentIds = append(currentIds, itemId)
+		}
+	}
+
+	for _, item := range input.ItemIds {
+		// if the item is not currently a member of the playlist, add it
+		if !slices.Contains(currentIds, item) {
+			_, err = youtubeService.PlaylistItems.Insert([]string{"snippet"}, &youtube.PlaylistItem{
+				Snippet: &youtube.PlaylistItemSnippet{
+					PlaylistId: input.Id,
+					ResourceId: &youtube.ResourceId{
+						VideoId: item,
+					},
+				},
+			}).Do()
+
+			if err != nil {
+				return errors.New(fmt.Sprintf("failed to add item %s to playlist: %v", item, err))
+			}
+		}
+	}
+
+	return nil
 }
