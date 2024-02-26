@@ -1,10 +1,10 @@
-PROJECT_NAME := Pulumi Xyz Resource Provider
+PROJECT_NAME := Pulumi Youtube Playlist Resource Provider
 
-PACK             := xyz
+PACK             := youtubeplaylist-native
 PACKDIR          := sdk
-PROJECT          := github.com/pulumi/pulumi-xyz
-NODE_MODULE_NAME := @pulumi/xyz
-NUGET_PKG_NAME   := Pulumi.Xyz
+PROJECT          := github.com/sanderginn/pulumi-youtubeplaylist
+NODE_MODULE_NAME := @sanderginn/youtubeplaylist
+NUGET_PKG_NAME   := Sanderginn.YoutubePlaylist
 
 PROVIDER        := pulumi-resource-${PACK}
 VERSION         ?= $(shell pulumictl get version)
