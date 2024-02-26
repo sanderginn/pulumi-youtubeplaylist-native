@@ -14,8 +14,8 @@
     },
     "files": [
         "index.ts",
+        "playlist.ts",
         "provider.ts",
-        "random.ts",
         "utilities.ts"
     ]
 }

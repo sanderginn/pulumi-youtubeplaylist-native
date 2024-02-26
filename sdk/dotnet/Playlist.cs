@@ -7,9 +7,9 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Pulumi.Serialization;
 
-namespace Pulumi.YoutubeplaylistNative.Provider
+namespace Pulumi.YoutubeplaylistNative
 {
-    [YoutubeplaylistNativeResourceType("youtubeplaylist-native:provider:Playlist")]
+    [YoutubeplaylistNativeResourceType("youtubeplaylist-native:index:Playlist")]
     public partial class Playlist : global::Pulumi.CustomResource
     {
         [Output("description")]
@@ -33,12 +33,12 @@ namespace Pulumi.YoutubeplaylistNative.Provider
         /// <param name="args">The arguments used to populate this resource's properties</param>
         /// <param name="options">A bag of options that control this resource's behavior</param>
         public Playlist(string name, PlaylistArgs? args = null, CustomResourceOptions? options = null)
-            : base("youtubeplaylist-native:provider:Playlist", name, args ?? new PlaylistArgs(), MakeResourceOptions(options, ""))
+            : base("youtubeplaylist-native:index:Playlist", name, args ?? new PlaylistArgs(), MakeResourceOptions(options, ""))
         {
         }
 
         private Playlist(string name, Input<string> id, CustomResourceOptions? options = null)
-            : base("youtubeplaylist-native:provider:Playlist", name, null, MakeResourceOptions(options, id))
+            : base("youtubeplaylist-native:index:Playlist", name, null, MakeResourceOptions(options, id))
         {
         }
 
