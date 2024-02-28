@@ -1,0 +1,6 @@
+name: provider-youtubeplaylist-native
+runtime: python
+plugins:
+  providers:
+    - name: youtubeplaylist-native
+      path: ../../bin

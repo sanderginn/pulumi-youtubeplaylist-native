@@ -1,0 +1,19 @@
+name: provider-youtubeplaylist-native
+runtime: yaml
+plugins:
+  providers:
+    - name: youtubeplaylist-native
+      path: ../../bin
+
+resources:
+  myPlaylist:
+    type: youtubeplaylist-native:Playlist
+    properties:
+      title: "test-playlist"
+      itemIds: 
+        - "wdbf7-tlDV8"
+        - "o-PviKVN0J4"
+
+outputs:
+  output:
+    value: ${myPlaylist.playlistId}

@@ -15,11 +15,11 @@ namespace Pulumi.YoutubeplaylistNative
         [Output("description")]
         public Output<string?> Description { get; private set; } = null!;
 
-        [Output("id")]
-        public Output<string?> Id { get; private set; } = null!;
+        [Output("itemIds")]
+        public Output<ImmutableArray<string>> ItemIds { get; private set; } = null!;
 
-        [Output("items")]
-        public Output<ImmutableArray<string>> Items { get; private set; } = null!;
+        [Output("playlistId")]
+        public Output<string?> PlaylistId { get; private set; } = null!;
 
         [Output("title")]
         public Output<string?> Title { get; private set; } = null!;
@@ -32,7 +32,7 @@ namespace Pulumi.YoutubeplaylistNative
         /// <param name="name">The unique name of the resource</param>
         /// <param name="args">The arguments used to populate this resource's properties</param>
         /// <param name="options">A bag of options that control this resource's behavior</param>
-        public Playlist(string name, PlaylistArgs? args = null, CustomResourceOptions? options = null)
+        public Playlist(string name, PlaylistArgs args, CustomResourceOptions? options = null)
             : base("youtubeplaylist-native:index:Playlist", name, args ?? new PlaylistArgs(), MakeResourceOptions(options, ""))
         {
         }
@@ -72,16 +72,16 @@ namespace Pulumi.YoutubeplaylistNative
         [Input("description")]
         public Input<string>? Description { get; set; }
 
-        [Input("id")]
-        public Input<string>? Id { get; set; }
-
-        [Input("items")]
-        private InputList<string>? _items;
-        public InputList<string> Items
+        [Input("itemIds", required: true)]
+        private InputList<string>? _itemIds;
+        public InputList<string> ItemIds
         {
-            get => _items ?? (_items = new InputList<string>());
-            set => _items = value;
+            get => _itemIds ?? (_itemIds = new InputList<string>());
+            set => _itemIds = value;
         }
+
+        [Input("playlistId")]
+        public Input<string>? PlaylistId { get; set; }
 
         [Input("title")]
         public Input<string>? Title { get; set; }

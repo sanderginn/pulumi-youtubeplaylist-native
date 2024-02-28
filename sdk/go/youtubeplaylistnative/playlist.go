@@ -7,6 +7,7 @@ import (
 	"context"
 	"reflect"
 
+	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"internal"
 )
@@ -15,8 +16,8 @@ type Playlist struct {
 	pulumi.CustomResourceState
 
 	Description pulumi.StringPtrOutput   `pulumi:"description"`
-	Id          pulumi.StringPtrOutput   `pulumi:"id"`
-	Items       pulumi.StringArrayOutput `pulumi:"items"`
+	ItemIds     pulumi.StringArrayOutput `pulumi:"itemIds"`
+	PlaylistId  pulumi.StringPtrOutput   `pulumi:"playlistId"`
 	Title       pulumi.StringPtrOutput   `pulumi:"title"`
 }
 
@@ -24,9 +25,12 @@ type Playlist struct {
 func NewPlaylist(ctx *pulumi.Context,
 	name string, args *PlaylistArgs, opts ...pulumi.ResourceOption) (*Playlist, error) {
 	if args == nil {
-		args = &PlaylistArgs{}
+		return nil, errors.New("missing one or more required arguments")
 	}
 
+	if args.ItemIds == nil {
+		return nil, errors.New("invalid value for required argument 'ItemIds'")
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Playlist
 	err := ctx.RegisterResource("youtubeplaylist-native:index:Playlist", name, args, &resource, opts...)
@@ -61,16 +65,16 @@ func (PlaylistState) ElementType() reflect.Type {
 
 type playlistArgs struct {
 	Description *string  `pulumi:"description"`
-	Id          *string  `pulumi:"id"`
-	Items       []string `pulumi:"items"`
+	ItemIds     []string `pulumi:"itemIds"`
+	PlaylistId  *string  `pulumi:"playlistId"`
 	Title       *string  `pulumi:"title"`
 }
 
 // The set of arguments for constructing a Playlist resource.
 type PlaylistArgs struct {
 	Description pulumi.StringPtrInput
-	Id          pulumi.StringPtrInput
-	Items       pulumi.StringArrayInput
+	ItemIds     pulumi.StringArrayInput
+	PlaylistId  pulumi.StringPtrInput
 	Title       pulumi.StringPtrInput
 }
 
@@ -115,12 +119,12 @@ func (o PlaylistOutput) Description() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Playlist) pulumi.StringPtrOutput { return v.Description }).(pulumi.StringPtrOutput)
 }
 
-func (o PlaylistOutput) Id() pulumi.StringPtrOutput {
-	return o.ApplyT(func(v *Playlist) pulumi.StringPtrOutput { return v.Id }).(pulumi.StringPtrOutput)
+func (o PlaylistOutput) ItemIds() pulumi.StringArrayOutput {
+	return o.ApplyT(func(v *Playlist) pulumi.StringArrayOutput { return v.ItemIds }).(pulumi.StringArrayOutput)
 }
 
-func (o PlaylistOutput) Items() pulumi.StringArrayOutput {
-	return o.ApplyT(func(v *Playlist) pulumi.StringArrayOutput { return v.Items }).(pulumi.StringArrayOutput)
+func (o PlaylistOutput) PlaylistId() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Playlist) pulumi.StringPtrOutput { return v.PlaylistId }).(pulumi.StringPtrOutput)
 }
 
 func (o PlaylistOutput) Title() pulumi.StringPtrOutput {

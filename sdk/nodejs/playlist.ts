@@ -32,8 +32,8 @@ export class Playlist extends pulumi.CustomResource {
     }
 
     public readonly description!: pulumi.Output<string | undefined>;
-    public readonly id!: pulumi.Output<string | undefined>;
-    public readonly items!: pulumi.Output<string[] | undefined>;
+    public readonly itemIds!: pulumi.Output<string[]>;
+    public readonly playlistId!: pulumi.Output<string | undefined>;
     public readonly title!: pulumi.Output<string | undefined>;
 
     /**
@@ -43,18 +43,21 @@ export class Playlist extends pulumi.CustomResource {
      * @param args The arguments to use to populate this resource's properties.
      * @param opts A bag of options that control this resource's behavior.
      */
-    constructor(name: string, args?: PlaylistArgs, opts?: pulumi.CustomResourceOptions) {
+    constructor(name: string, args: PlaylistArgs, opts?: pulumi.CustomResourceOptions) {
         let resourceInputs: pulumi.Inputs = {};
         opts = opts || {};
         if (!opts.id) {
+            if ((!args || args.itemIds === undefined) && !opts.urn) {
+                throw new Error("Missing required property 'itemIds'");
+            }
             resourceInputs["description"] = args ? args.description : undefined;
-            resourceInputs["id"] = args ? args.id : undefined;
-            resourceInputs["items"] = args ? args.items : undefined;
+            resourceInputs["itemIds"] = args ? args.itemIds : undefined;
+            resourceInputs["playlistId"] = args ? args.playlistId : undefined;
             resourceInputs["title"] = args ? args.title : undefined;
         } else {
             resourceInputs["description"] = undefined /*out*/;
-            resourceInputs["id"] = undefined /*out*/;
-            resourceInputs["items"] = undefined /*out*/;
+            resourceInputs["itemIds"] = undefined /*out*/;
+            resourceInputs["playlistId"] = undefined /*out*/;
             resourceInputs["title"] = undefined /*out*/;
         }
         opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
@@ -67,7 +70,7 @@ export class Playlist extends pulumi.CustomResource {
  */
 export interface PlaylistArgs {
     description?: pulumi.Input<string>;
-    id?: pulumi.Input<string>;
-    items?: pulumi.Input<pulumi.Input<string>[]>;
+    itemIds: pulumi.Input<pulumi.Input<string>[]>;
+    playlistId?: pulumi.Input<string>;
     title?: pulumi.Input<string>;
 }
