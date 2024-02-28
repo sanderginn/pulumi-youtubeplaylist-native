@@ -8,7 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Pulumi" Version="3.*" />
-		<PackageReference Include="Pulumi.YoutubeplaylistNative" Version="0.0.1-alpha.1708962408+de178dfb.dirty" />
+		<PackageReference Include="Pulumi.YoutubeplaylistNative" Version="0.0.1-alpha.1709132235+8447c7a3.dirty" />
 	</ItemGroup>
 
 </Project>

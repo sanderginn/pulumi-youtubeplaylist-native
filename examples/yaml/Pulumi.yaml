@@ -9,7 +9,7 @@ resources:
   myPlaylist:
     type: youtubeplaylist-native:Playlist
     properties:
-      title: "test-playlist"
+      title: "pulumi-test-playlist"
       itemIds: 
         - "wdbf7-tlDV8"
         - "o-PviKVN0J4"

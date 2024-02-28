@@ -8,7 +8,7 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		myPlaylist, err := youtubeplaylistNative.NewPlaylist(ctx, "myPlaylist", &youtubeplaylistNative.PlaylistArgs{
-			Title: pulumi.String("test-playlist"),
+			Title: pulumi.String("pulumi-test-playlist"),
 			ItemIds: pulumi.StringArray{
 				pulumi.String("wdbf7-tlDV8"),
 				pulumi.String("o-PviKVN0J4"),

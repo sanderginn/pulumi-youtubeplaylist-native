@@ -7,7 +7,7 @@ return await Deployment.RunAsync(() =>
 {
     var myPlaylist = new YoutubeplaylistNative.Playlist("myPlaylist", new()
     {
-        Title = "test-playlist",
+        Title = "pulumi-test-playlist",
         ItemIds = new[]
         {
             "wdbf7-tlDV8",
